@@ -1,0 +1,9 @@
+[
+	{ "id": "guide" },
+	{ "id": "azure" },
+	{ "id": "devops" },
+	{ "id": "kubernetes" },
+	{ "id": "terraform" },
+	{ "id": "ci-cd" },
+	{ "id": "notes" }
+]

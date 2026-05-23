@@ -1,0 +1,42 @@
+{
+	"name": "mhamza-space",
+	"description": "Personal site of Muhammad Hamza — Azure Cloud Specialist & DevOps Engineer.",
+	"author": "Muhammad Hamza <devops.engineer099@gmail.com>",
+	"license": "MIT",
+	"homepage": "https://mhamza.space",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hamzawork1/kb-blogs.git"
+	},
+	"type": "module",
+	"version": "0.1.0",
+	"packageManager": "pnpm@10.27.0",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"astro": "astro",
+		"postbuild": "pagefind --site dist",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write ."
+	},
+	"dependencies": {
+		"@astrojs/mdx": "5.0.6",
+		"@astrojs/sitemap": "3.7.2",
+		"@iconify-json/lucide": "^1.2.108",
+		"@iconify-json/simple-icons": "^1.2.83",
+		"@iconify/utils": "^2.2.1",
+		"@shikijs/themes": "^4.1.0",
+		"astro": "6.3.6",
+		"astro-expressive-code": "^0.42.0",
+		"sharp": "^0.34.5"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.15",
+		"@types/node": "^24.3.0",
+		"pagefind": "^1.5.2",
+		"shiki": "^4.1.0",
+		"typescript": "^5.9.2",
+		"vite": "^7"
+	}
+}

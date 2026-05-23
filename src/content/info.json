@@ -1,0 +1,26 @@
+[
+	{
+		"id": 1,
+		"icon": {
+			"type": "lucide",
+			"name": "briefcase"
+		},
+		"text": "Azure Cloud & DevOps Engineer"
+	},
+	{
+		"id": 2,
+		"icon": {
+			"type": "lucide",
+			"name": "globe"
+		},
+		"text": "Remote / Worldwide"
+	},
+	{
+		"id": 3,
+		"icon": {
+			"type": "simple-icons",
+			"name": "microsoftazure"
+		},
+		"text": "Azure · DevOps · IaC"
+	}
+]

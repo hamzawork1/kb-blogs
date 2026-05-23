@@ -1,0 +1,29 @@
+[
+	{
+		"id": 1,
+		"icon": {
+			"type": "lucide",
+			"name": "github"
+		},
+		"text": "GitHub",
+		"link": "https://github.com/hamzawork1"
+	},
+	{
+		"id": 2,
+		"icon": {
+			"type": "simple-icons",
+			"name": "linkedin"
+		},
+		"text": "LinkedIn",
+		"link": "https://www.linkedin.com/in/hamza-ramzan/"
+	},
+	{
+		"id": 3,
+		"icon": {
+			"type": "lucide",
+			"name": "mail"
+		},
+		"text": "Email",
+		"link": "mailto:devops.engineer099@gmail.com"
+	}
+]

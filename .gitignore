@@ -1,0 +1,83 @@
+# --- build output ---
+dist/
+.output/
+
+# --- generated types & caches ---
+.astro/
+.pagefind/
+
+# --- dependencies ---
+node_modules/
+
+# --- logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# --- environment variables ---
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+# .env.example is safe to commit — keep it tracked
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- IDE / editor ---
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*.bak
+.history/
+# VSCode: keep team-shared settings/extensions tracked, ignore personal cruft
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.vscode/*.local.json
+
+# --- Claude Code ---
+# Local (per-machine) permissions, never commit
+.claude/settings.local.json
+.claude/*.local.json
+.claude/.credentials.json
+# Project-level Claude memory file — local only
+CLAUDE.md
+
+# --- deployment platform ---
+.vercel/
+.netlify/
+.wrangler/
+.cloudflare/
+
+# --- coverage / test artefacts ---
+coverage/
+*.lcov
+.nyc_output/
+
+# --- TypeScript ---
+*.tsbuildinfo
+
+# --- misc ---
+.cache/
+.tmp/
+tmp/
+temp/
