@@ -1,0 +1,95 @@
+name: CI/CD
+
+# CI runs on every PR + every push to main/staging.
+# Deploy runs only on push to main (production) or staging (preview),
+# and only after the build job is green.
+#
+# Required repository secrets:
+#   CLOUDFLARE_API_TOKEN   - Cloudflare API token, scope: Account -> Cloudflare Pages -> Edit
+#   CLOUDFLARE_ACCOUNT_ID  - found in Cloudflare dashboard's right sidebar
+#
+# Until those secrets are configured, the deploy job will fail at the
+# Wrangler step. The build job will still run and validate every change.
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+# Prevent overlapping runs on the same ref. PR runs cancel on new pushes;
+# main/staging deploys queue rather than cancel (don't drop a deploy mid-flight).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (Biome)
+        run: pnpm lint
+
+      - name: Build (Astro + Pagefind index)
+        run: pnpm build
+
+      - name: Verify Pagefind index exists
+        run: test -d dist/pagefind && echo "OK" || (echo "Pagefind index missing"; exit 1)
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+          retention-days: 7
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy to Cloudflare Pages (${{ github.ref_name }})
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    # Pretty deployment tracking in the GitHub UI (Environments tab).
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      url: ${{ steps.cf.outputs.deployment-url }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+
+      - name: Deploy via Wrangler
+        id: cf
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # --branch makes Cloudflare Pages treat main as the production deploy
+          # for the project, and any other branch as a preview deploy.
+          command: pages deploy dist --project-name=mhamza-space --branch=${{ github.ref_name }}
