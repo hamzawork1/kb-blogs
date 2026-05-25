@@ -1,0 +1,49 @@
+# Cloudflare Worker — static site delivery for mhamza.space.
+#
+# This Worker has no code of its own; it serves the contents of dist/
+# (the Astro build output) as static assets at the edge.
+#
+# Two named environments:
+#   - production -> Worker name "mhamza-space"          (mapped to mhamza.space)
+#   - staging    -> Worker name "mhamza-space-staging"  (mapped to staging.mhamza.space later)
+#
+# The GitHub Actions workflow picks the environment based on the pushed branch:
+#   main    -> --env production
+#   staging -> --env staging
+#
+# Reference: https://developers.cloudflare.com/workers/static-assets/
+
+name = "mhamza-space"
+compatibility_date = "2025-05-25"
+
+[assets]
+directory = "./dist"
+# When a request doesn't match a built asset, fall back to the prebuilt 404 page
+# from src/pages/404.astro. (single-page-application would route everything to
+# index.html — not what we want for a multi-page static site.)
+not_found_handling = "404-page"
+# No HTML extension stripping; Astro already emits clean URLs (/blog/<slug>/index.html).
+html_handling = "auto-trailing-slash"
+
+# ---------------------------------------------------------------------------
+# Production environment — pushed on commits to `main`.
+# ---------------------------------------------------------------------------
+[env.production]
+name = "mhamza-space"
+
+[env.production.assets]
+directory = "./dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+
+# ---------------------------------------------------------------------------
+# Staging environment — pushed on commits to `staging`.
+# Separate Worker so prod and staging can be rolled back independently.
+# ---------------------------------------------------------------------------
+[env.staging]
+name = "mhamza-space-staging"
+
+[env.staging.assets]
+directory = "./dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
