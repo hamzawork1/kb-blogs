@@ -1,0 +1,61 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"config:recommended",
+		":semanticCommits",
+		":semanticCommitTypeAll(chore)",
+		":timezone(Asia/Karachi)",
+		":automergeDigest",
+		":enableVulnerabilityAlerts",
+		"group:monorepos",
+		"schedule:weekly"
+	],
+	"labels": ["dependencies"],
+	"rangeStrategy": "bump",
+	"packageRules": [
+		{
+			"matchPackageNames": ["/^astro$/", "/^@astrojs\\//", "/^astro-/"],
+			"groupName": "astro ecosystem",
+			"semanticCommitScope": "astro"
+		},
+		{
+			"matchPackageNames": [
+				"/^@biomejs\\//",
+				"typescript",
+				"vite",
+				"/^@types\\//"
+			],
+			"groupName": "dev tooling",
+			"semanticCommitScope": "tooling"
+		},
+		{
+			"matchPackageNames": ["/^@iconify/"],
+			"groupName": "iconify",
+			"semanticCommitScope": "icons"
+		},
+		{
+			"matchManagers": ["github-actions"],
+			"groupName": "github actions",
+			"semanticCommitType": "ci",
+			"pinDigests": true
+		},
+		{
+			"matchUpdateTypes": ["minor", "patch"],
+			"matchCurrentVersion": "!/^0/",
+			"groupName": "minor and patch"
+		},
+		{
+			"matchPackageNames": ["pnpm"],
+			"enabled": false,
+			"description": "pnpm is pinned via packageManager in package.json - manual bump only"
+		}
+	],
+	"vulnerabilityAlerts": {
+		"labels": ["security"],
+		"automerge": false
+	},
+	"lockFileMaintenance": {
+		"enabled": true,
+		"schedule": ["before 6am on monday"]
+	}
+}

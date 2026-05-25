@@ -1,0 +1,19 @@
+# CODEOWNERS — automatic reviewer assignment.
+#
+# Solo repo today, so all paths fall to @hamzawork1. The /.github/, /wrangler.toml,
+# and /package/ entries below restate the same owner explicitly: they make the
+# intent obvious to anyone reading the file, and they short-circuit the wildcard
+# match for paths where review focus is highest (CI/CD, deploy config, theme
+# integration).
+#
+# Reference: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+
+* @hamzawork1
+
+# CI / CD, deploy, supply-chain
+/.github/         @hamzawork1
+/renovate.json    @hamzawork1
+/wrangler.toml    @hamzawork1
+
+# Customised Spectre theme integration
+/package/         @hamzawork1

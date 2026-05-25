@@ -1,0 +1,8 @@
+# Disable blank issues - force people through the templates so the report is
+# usable. Contact links route off-platform questions to the right channel.
+blank_issues_enabled: false
+
+contact_links:
+  - name: General contact
+    url: https://www.linkedin.com/in/hamza-ramzan/
+    about: For non-bug questions, reach out on LinkedIn.
