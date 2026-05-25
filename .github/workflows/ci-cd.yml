@@ -84,12 +84,13 @@ jobs:
           name: site-dist
           path: dist
 
+      # The site is deployed as a Cloudflare Worker with static assets
+      # (the modern successor to Pages). Two environments are declared in
+      # wrangler.toml — production (main) and staging.
       - name: Deploy via Wrangler
         id: cf
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # --branch makes Cloudflare Pages treat main as the production deploy
-          # for the project, and any other branch as a preview deploy.
-          command: pages deploy dist --project-name=mhamza-space --branch=${{ github.ref_name }}
+          command: deploy --env ${{ github.ref_name == 'main' && 'production' || 'staging' }}
