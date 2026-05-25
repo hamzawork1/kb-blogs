@@ -14,15 +14,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 - GitHub Actions CI/CD pipeline (`.github/workflows/ci-cd.yml`):
   - `build` job runs on every PR + push to `main`/`staging` — pnpm install,
     Biome lint, Astro build, Pagefind index verification.
-  - `deploy` job runs on push to `main`/`staging`, uploads `dist/` to
-    Cloudflare Pages via Wrangler. Production deploys come from `main`;
-    staging deploys to a preview URL.
-  - Requires repo secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+  - `deploy` job runs on push to `main`/`staging`, runs `wrangler deploy
+    --env <env>` to push `dist/` to a Cloudflare Worker with static assets.
+    Production deploys come from `main` (Worker: `mhamza-space`); staging
+    deploys to a separate Worker (`mhamza-space-staging`).
+  - Requires repo secrets `CLOUDFLARE_API_TOKEN` (scope `Workers
+    Scripts:Edit`) and `CLOUDFLARE_ACCOUNT_ID`.
+- `wrangler.toml` at repo root declaring the production and staging
+  environments and `[assets]` config pointing at `./dist`.
 
 ### Changed
 - `docs/runbooks/deploy-cloudflare-pages.md` rewritten for the
-  Actions-driven deploy flow (no native Git connection on the Cloudflare
-  side). See ADR 0003 for context.
+  Actions-driven, Workers-with-static-assets deploy flow (Cloudflare's
+  modern successor to Pages). See ADR 0003 for the full rationale,
+  including why we lean into Workers over Pages.
 
 ## [2026-05-23]
 
