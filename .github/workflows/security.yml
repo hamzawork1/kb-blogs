@@ -29,6 +29,8 @@ jobs:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -46,8 +48,15 @@ jobs:
 
   osv-scanner:
     name: SCA (osv-scanner)
-    # Reusable workflow from Google. Permissions are set inside the
-    # reusable workflow file itself.
+    # Reusable workflow from Google. The reusable file declares its own
+    # `permissions:` (actions: read, contents: read, security-events: write)
+    # but reusable workflows inherit the caller's permissions, so we MUST
+    # grant the same scopes here at the calling job - otherwise the run
+    # ends in startup_failure.
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
     with:
       scan-args: |-
@@ -59,6 +68,8 @@ jobs:
     name: SBOM (CycloneDX)
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
