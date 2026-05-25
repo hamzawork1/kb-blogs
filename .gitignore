@@ -55,10 +55,9 @@ $RECYCLE.BIN/
 .vscode/*.local.json
 
 # --- Claude Code ---
-# Local (per-machine) permissions, never commit
-.claude/settings.local.json
-.claude/*.local.json
-.claude/.credentials.json
+# Whole .claude/ folder is local — permissions and settings include
+# user-specific paths that shouldn't be in the repo.
+.claude/
 # Project-level Claude memory file — local only
 CLAUDE.md
 
