@@ -88,10 +88,16 @@ jobs:
       # The site is deployed as a Cloudflare Worker with static assets
       # (the modern successor to Pages). Two environments are declared in
       # wrangler.toml — production (main) and staging.
+      #
+      # wranglerVersion: 4 is required. The default Wrangler 3.x installed
+      # by this action does NOT support the [assets] directive used by
+      # static-only Workers — it expects a `main` JS entry-point and
+      # fails to parse `[env.<name>]` blocks that lack one.
       - name: Deploy via Wrangler
         id: cf
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
           command: deploy --env ${{ github.ref_name == 'main' && 'production' || 'staging' }}
