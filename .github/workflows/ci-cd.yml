@@ -93,6 +93,13 @@ jobs:
       # by this action does NOT support the [assets] directive used by
       # static-only Workers — it expects a `main` JS entry-point and
       # fails to parse `[env.<name>]` blocks that lack one.
+      #
+      # --name forces the Worker name unambiguously. The first staging
+      # deploy created a Worker named `kb-blogs-staging` instead of
+      # respecting `[env.staging].name = "mhamza-space-staging"` in
+      # wrangler.toml — likely because Cloudflare resolves env-block
+      # `name` against pre-existing project context. The CLI flag
+      # overrides everything.
       - name: Deploy via Wrangler
         id: cf
         uses: cloudflare/wrangler-action@v3
@@ -100,4 +107,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
-          command: deploy --env ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+          command: deploy --env ${{ github.ref_name == 'main' && 'production' || 'staging' }} --name ${{ github.ref_name == 'main' && 'mhamza-space' || 'mhamza-space-staging' }}
