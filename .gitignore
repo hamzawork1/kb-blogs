@@ -77,6 +77,8 @@ coverage/
 .lighthouseci/
 lychee-out.md
 .lycheecache
+sbom.cdx.json
+lychee/
 
 # --- TypeScript ---
 *.tsbuildinfo

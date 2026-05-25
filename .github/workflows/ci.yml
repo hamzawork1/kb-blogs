@@ -87,11 +87,51 @@ jobs:
       - name: Run astro check
         run: pnpm check
 
+  pr-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  commitlint:
+    name: Commitlint (per-commit message)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run commitlint on all PR commits
+        uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
+        with:
+          configFile: ./commitlint.config.js
+
   build:
     name: Build
     needs: [lint, typecheck]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # required by attest-build-provenance to sign with OIDC
+      attestations: write # required by attest-build-provenance to write the attestation
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -112,6 +152,15 @@ jobs:
           path: dist
           retention-days: 7
           if-no-files-found: error
+      # SLSA Level 3 build provenance. Cryptographically signs the dist
+      # artifact via the GitHub OIDC token; verifiable via
+      # `gh attestation verify --owner hamzawork1 <file>`. Push-only because
+      # PRs from forks cannot mint OIDC tokens.
+      - name: Attest build provenance
+        if: github.event_name == 'push'
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/**/*
 
   lighthouse:
     name: Lighthouse CI (perf + a11y budgets)
@@ -168,10 +217,13 @@ jobs:
       # without hitting the network. Fast (~10s) and deterministic - exactly
       # what we want as a PR-blocking gate. Live external links are checked
       # by `link-check-live` after staging deploy, on a different cadence.
+      # --root-dir requires an absolute path. ${{ github.workspace }} resolves
+      # to the runner workspace root; the previous --base ./dist was rejected
+      # by Lychee v0.23 ("Base must be a URL or absolute local path").
       - name: Run Lychee (offline)
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
-          args: --offline --base ./dist --no-progress ./dist
+          args: --offline --root-dir ${{ github.workspace }}/dist --no-progress ./dist
           fail: true
 
   deploy:
@@ -216,6 +268,29 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
           command: deploy --env ${{ github.ref_name == 'main' && 'production' || 'staging' }} --name ${{ github.ref_name == 'main' && 'mhamza-space' || 'mhamza-space-staging' }}
+
+  smoke:
+    name: Smoke test (synthetic GET)
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup-node-pnpm
+      # Hit the just-deployed URL and assert the page is real (status 200 +
+      # content markers). Catches "deploy succeeded but site is broken".
+      # URL is environment-aware: prod gets mhamza.space, staging gets the
+      # staging subdomain.
+      - name: Run smoke test
+        run: |
+          node scripts/smoke.mjs "${{ github.ref_name == 'main' && 'https://mhamza.space' || 'https://staging.mhamza.space' }}"
 
   link-check-live:
     name: Link audit (live, external)

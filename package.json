@@ -19,7 +19,8 @@
 		"postbuild": "pagefind --site dist",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
-		"check": "astro check"
+		"check": "astro check",
+		"test:smoke": "node scripts/smoke.mjs"
 	},
 	"dependencies": {
 		"@astrojs/mdx": "5.0.6",
