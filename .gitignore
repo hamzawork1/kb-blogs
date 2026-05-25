@@ -74,6 +74,7 @@ tmp-*/
 coverage/
 *.lcov
 .nyc_output/
+.lighthouseci/
 
 # --- TypeScript ---
 *.tsbuildinfo

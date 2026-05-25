@@ -1,0 +1,30 @@
+{
+	"ci": {
+		"collect": {
+			"staticDistDir": "./dist",
+			"url": [
+				"http://localhost/index.html",
+				"http://localhost/blog/index.html",
+				"http://localhost/projects/index.html"
+			],
+			"numberOfRuns": 3,
+			"settings": {
+				"preset": "desktop",
+				"throttlingMethod": "devtools"
+			}
+		},
+		"assert": {
+			"assertions": {
+				"categories:performance": ["warn", { "minScore": 0.85 }],
+				"categories:accessibility": ["warn", { "minScore": 0.95 }],
+				"categories:best-practices": ["warn", { "minScore": 0.9 }],
+				"categories:seo": ["warn", { "minScore": 0.95 }],
+				"uses-long-cache-ttl": "off",
+				"csp-xss": "off"
+			}
+		},
+		"upload": {
+			"target": "temporary-public-storage"
+		}
+	}
+}
