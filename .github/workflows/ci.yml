@@ -58,6 +58,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Harden runner
+        # Audit mode: logs outbound network calls without blocking. Defence-
+        # in-depth against compromised dependencies exfiltrating data.
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup
@@ -70,6 +76,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup
@@ -83,6 +93,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup
@@ -112,6 +126,10 @@ jobs:
       name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
       url: ${{ steps.cf.outputs.deployment-url }}
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -130,7 +148,8 @@ jobs:
       # project context. The CLI flag overrides everything.
       - name: Deploy via Wrangler
         id: cf
-        uses: cloudflare/wrangler-action@v3
+        # Third-party action SHA-pinned for supply-chain hardening.
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
