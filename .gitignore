@@ -66,6 +66,9 @@ CLAUDE.md
 .netlify/
 .wrangler/
 .cloudflare/
+# Wrangler dry-run outdir + ad-hoc test artefacts
+tmp-wrangler-*/
+tmp-*/
 
 # --- coverage / test artefacts ---
 coverage/

@@ -2,29 +2,33 @@
 
 Personal site and tech blog of **Muhammad Hamza** — Azure Cloud Specialist & DevOps Engineer.
 
-Source: <https://github.com/hamzawork1/kb-blogs>
-Live:   <https://mhamza.space>
+Source:  <https://github.com/hamzawork1/kb-blogs>
+Staging: <https://staging.mhamza.space>
+Live:    <https://mhamza.space> (not yet deployed — pending first push to `main`)
 
 Built on [Astro](https://astro.build/) using a customised version of the
 [Spectre](https://github.com/louisescher/spectre) theme. Deployed as a fully
-static site on **Cloudflare Pages**.
+static site to **Cloudflare Workers (with static assets)** via GitHub Actions.
 
 ---
 
 ## Quick start
 
+This repo uses **pnpm** (workspace setup). Install pnpm via `corepack enable`
+or `npm install -g pnpm@10.27.0`, then:
+
 ```powershell
 # install deps (first time)
-npm install
+pnpm install
 
 # dev server (no search, fast iteration)
-npm run dev
+pnpm dev
 
 # production build + Pagefind search index
-npm run build
+pnpm build
 
 # preview the built output locally (search works here)
-npm run preview
+pnpm preview
 ```
 
 | Script        | What it does |

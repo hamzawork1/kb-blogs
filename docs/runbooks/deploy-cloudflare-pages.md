@@ -229,4 +229,13 @@ If usage outgrows the free tier, options:
   without a `main`. **Lesson:** when an action wraps a CLI whose major
   version matters for a feature, always pin the CLI version explicitly
   — don't rely on the action's default.
-- _(more to be filled during first live deploy)_
+- 2026-05-25 — Custom domain `staging.mhamza.space` attached cleanly via
+  the Worker → Domains tab. Cloudflare auto-created the DNS record in the
+  `mhamza.space` zone (already on Cloudflare DNS) and provisioned SSL
+  within ~1 minute. **Both** the custom domain and the default
+  `mhamza-space-staging.devops-engineer099.workers.dev` URL served the
+  site at first. The `.workers.dev` URL stays active by default — to
+  enforce single-source-of-truth, disable it from the Worker → Domains
+  tab (toggle next to the `.workers.dev` entry). After disabling, only
+  the custom domain reaches the Worker.
+- _(more to be filled during the first production deploy + custom domain wiring for mhamza.space)_
