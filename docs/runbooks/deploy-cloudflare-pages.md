@@ -202,4 +202,18 @@ If usage outgrows the free tier, options:
   **Worker** (not a Pages project). The "Pages" Direct Upload flow is
   hidden behind `https://dash.cloudflare.com/<account-id>/pages/new/upload-assets`.
   We embraced the Worker route per ADR 0003.
+- 2026-05-25 — First staging deploy (PR #2 merge) failed because
+  `cloudflare/wrangler-action@v3` defaults to installing **Wrangler 3.90.0**.
+  Wrangler 3 does NOT fully support static-only Workers — it treats
+  `[assets] directory = ...` as auxiliary, still demands a `main` JS
+  entry-point, and fails to parse `[env.staging]` blocks that don't
+  declare one. Two errors surfaced together:
+  - `No environment found in configuration with name "staging".`
+  - `Missing entry-point: The entry-point should be specified via the
+    command line ... or the main config field.`
+  Fix: pin `wranglerVersion: "4"` in the workflow step. With Wrangler 4
+  the `[assets]` block is first-class and static-only Workers deploy
+  without a `main`. **Lesson:** when an action wraps a CLI whose major
+  version matters for a feature, always pin the CLI version explicitly
+  — don't rely on the action's default.
 - _(more to be filled during first live deploy)_
