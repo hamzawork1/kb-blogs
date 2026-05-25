@@ -477,22 +477,24 @@ Steps:
 
 2. Replace the file on disk (drag-and-drop in your file manager, or `cp` in a shell).
 
-3. Verify dimensions:
+3. Verify dimensions (run from the repo root):
    ```powershell
    Add-Type -AssemblyName System.Drawing
-   $img = [System.Drawing.Image]::FromFile("F:\Astor-my-blogs\src\assets\pfp.png")
-   "$($img.Width) x $($img.Height) px, $((Get-Item $img).Length) bytes"
+   $path = (Resolve-Path .\src\assets\pfp.png).Path
+   $img = [System.Drawing.Image]::FromFile($path)
+   "$($img.Width) x $($img.Height) px, $((Get-Item $path).Length) bytes"
    $img.Dispose()
    ```
 
 4. Commit + PR + merge as usual.
 
-If your source is a JPG, convert first:
+If your source is a JPG, convert first (run from the repo root):
 
 ```powershell
 Add-Type -AssemblyName System.Drawing
 $src = [System.Drawing.Image]::FromFile("path\to\your\photo.jpg")
-$src.Save("F:\Astor-my-blogs\src\assets\pfp.png", [System.Drawing.Imaging.ImageFormat]::Png)
+$dest = Join-Path (Get-Location) "src\assets\pfp.png"
+$src.Save($dest, [System.Drawing.Imaging.ImageFormat]::Png)
 $src.Dispose()
 ```
 
