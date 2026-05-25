@@ -18,7 +18,8 @@
 		"astro": "astro",
 		"postbuild": "pagefind --site dist",
 		"lint": "biome check .",
-		"lint:fix": "biome check --write ."
+		"lint:fix": "biome check --write .",
+		"check": "astro check"
 	},
 	"dependencies": {
 		"@astrojs/mdx": "5.0.6",
@@ -32,6 +33,7 @@
 		"sharp": "^0.34.5"
 	},
 	"devDependencies": {
+		"@astrojs/check": "^0.9.4",
 		"@biomejs/biome": "2.4.15",
 		"@types/node": "^24.3.0",
 		"pagefind": "^1.5.2",
