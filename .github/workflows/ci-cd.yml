@@ -41,7 +41,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Astro 6 requires Node >= 22.12. Pin to 22 LTS for stability.
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies

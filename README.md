@@ -201,20 +201,26 @@ For images that appear inside a post's body (e.g. Azure portal screenshots):
 
 ---
 
-## Deployment — Cloudflare Pages
+## Deployment — Cloudflare Workers (static assets) via GitHub Actions
 
-The site builds to fully-static HTML (no Node adapter). Cloudflare Pages picks
-this up automatically.
+The site builds to fully-static HTML and is deployed as a Cloudflare
+**Worker with static assets** (the modern successor to Pages). Deploys are
+driven by [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml),
+not by Cloudflare's native Git integration.
 
-1. In the Cloudflare dashboard → **Workers & Pages → Create application → Pages → Connect to Git**.
-2. Pick this repo (`hamzawork1/kb-blogs`).
-3. Build settings:
-   - **Production branch:** `main`
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-   - **Node version:** `20` (set via env var `NODE_VERSION=20` or in repo).
-4. Add the custom domain `mhamza.space` under **Custom domains**.
-5. Every PR + non-main branch gets an automatic preview deployment.
+- **Production** — push to `main` → Worker `mhamza-space` → custom domain
+  `mhamza.space`.
+- **Staging** — push to `staging` → Worker `mhamza-space-staging` → optional
+  `staging.mhamza.space`.
+- **Build environment** — Node 22 (Astro 6 requires `>= 22.12`), pnpm 10.27.
+- **Asset config** — declared in [`wrangler.toml`](wrangler.toml).
+- **Required GitHub secrets** — `CLOUDFLARE_API_TOKEN` (scope
+  `Workers Scripts:Edit`), `CLOUDFLARE_ACCOUNT_ID`.
+
+Full step-by-step setup, rollback, and troubleshooting live in
+[`docs/runbooks/deploy-cloudflare-pages.md`](docs/runbooks/deploy-cloudflare-pages.md).
+Rationale is in [ADR 0001](docs/decisions/0001-static-cloudflare-pages.md)
+and [ADR 0003](docs/decisions/0003-github-actions-deploy.md).
 
 ---
 
