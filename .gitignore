@@ -75,6 +75,8 @@ coverage/
 *.lcov
 .nyc_output/
 .lighthouseci/
+lychee-out.md
+.lycheecache
 
 # --- TypeScript ---
 *.tsbuildinfo
