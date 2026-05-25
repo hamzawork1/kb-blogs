@@ -202,6 +202,19 @@ If usage outgrows the free tier, options:
   **Worker** (not a Pages project). The "Pages" Direct Upload flow is
   hidden behind `https://dash.cloudflare.com/<account-id>/pages/new/upload-assets`.
   We embraced the Worker route per ADR 0003.
+- 2026-05-25 — First successful staging deploy created a Worker named
+  **`kb-blogs-staging`** instead of `mhamza-space-staging` declared in
+  `wrangler.toml`'s `[env.staging].name`. Cloudflare appears to resolve
+  the env-block `name` against pre-existing project context on the
+  account (possibly the GitHub repo name `kb-blogs` getting picked up
+  somewhere), not against the literal value in the TOML.
+  **Fix:** Force the Worker name via the CLI `--name` flag in the
+  deploy command:
+  `wrangler deploy --env <env> --name <worker-name>`.
+  CLI `--name` overrides everything — config, environment defaults,
+  pre-existing project context. **Lesson:** when a Cloudflare account
+  has any history with similar-looking names, never trust env-block
+  `name` alone — always pin via CLI.
 - 2026-05-25 — First staging deploy (PR #2 merge) failed because
   `cloudflare/wrangler-action@v3` defaults to installing **Wrangler 3.90.0**.
   Wrangler 3 does NOT fully support static-only Workers — it treats
