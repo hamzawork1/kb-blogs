@@ -3,8 +3,10 @@
 Personal site and tech blog of **Muhammad Hamza** — Azure Cloud Specialist & DevOps Engineer.
 
 [![CI](https://github.com/hamzawork1/kb-blogs/actions/workflows/ci.yml/badge.svg)](https://github.com/hamzawork1/kb-blogs/actions/workflows/ci.yml)
+[![Security](https://github.com/hamzawork1/kb-blogs/actions/workflows/security.yml/badge.svg)](https://github.com/hamzawork1/kb-blogs/actions/workflows/security.yml)
 [![Deployed on Cloudflare Workers](https://img.shields.io/badge/deploy-cloudflare%20workers-F38020?logo=cloudflare&logoColor=white)](https://mhamza.space)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![SLSA Level 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev/spec/v1.0/levels#build-l3)
 
 Source:  <https://github.com/hamzawork1/kb-blogs>
 Staging: <https://staging.mhamza.space>
@@ -60,20 +62,14 @@ main          production         (mhamza.space)         protected, PR-only from 
 ### Workflow for every change
 
 1. `git checkout staging && git pull`
-2. `git checkout -b post/<slug>` (or `feature/<name>`, `fix/<name>`)
-3. Make changes. Commit in small, focused commits.
+2. `git checkout -b post/<slug>` (or `feature/<name>`, `fix/<name>`, `chore/<name>`, `docs/<name>`, `ci/<name>`)
+3. Make changes. Commit in small, focused commits (Conventional Commits — `commitlint` is enforced on PRs).
 4. `git push -u origin <branch-name>`
-5. Open a PR → **`staging`**. Cloudflare Pages auto-deploys a preview URL.
+5. Open a PR → **`staging`**. CI runs lint, typecheck, build, Lighthouse, link-check, secret-scan, SCA, SBOM, and provenance attestation. No PR preview URL — verify locally with `pnpm preview`, or merge to staging to see it at `staging.mhamza.space`.
 6. Verify the preview, merge to `staging`.
 7. Once `staging` is solid, open a PR `staging` → `main`. Merge to deploy live.
 
 > Never push directly to `main`. All production deploys come through staging.
-
-### Initial setup branch
-
-`start-the-project` is the bootstrap branch (this repo's initial scaffolding —
-branding, content cleanup, first post). It'll be merged into `staging`, then
-`staging` → `main` once you're happy with the live result.
 
 ---
 

@@ -1,0 +1,78 @@
+# DevSecOps - Secret Scanning + Software Composition Analysis + SBOM.
+#
+# Runs on every PR + push to main/staging, plus a Monday-morning cron so
+# fresh CVEs get caught even if the repo is quiet that week.
+#
+# Tools (all open-source, free for public repos):
+#   gitleaks    - secret detection via deep history scan (fetch-depth: 0)
+#   osv-scanner - SCA against the pnpm-lock.yaml using Google's OSV DB
+#   syft        - CycloneDX SBOM of the npm dependency graph
+#
+# Findings here surface as failed checks on the PR. Renovate + Dependabot
+# security alerts (from renovate.json) handle the fix-PR creation flow.
+
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging]
+  schedule:
+    - cron: "23 6 * * 1" # Mondays 06:23 UTC = 11:23 AM Karachi
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Scan full history, not just the latest commit.
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  osv-scanner:
+    name: SCA (osv-scanner)
+    # Reusable workflow from Google. Permissions are set inside the
+    # reusable workflow file itself.
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+    with:
+      scan-args: |-
+        --lockfile=pnpm-lock.yaml
+        --recursive
+        ./
+
+  sbom:
+    name: SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup-node-pnpm
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          format: cyclonedx-json
+          artifact-name: sbom.cdx.json
+          path: ./
+          upload-artifact: true
+          upload-release-assets: false
