@@ -11,6 +11,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
   - `CHANGELOG.md` (this file).
   - `docs/decisions/` — architecture decision records (ADRs).
   - `docs/runbooks/` — operational how-tos (deploy, new post workflow).
+- GitHub Actions CI/CD pipeline (`.github/workflows/ci-cd.yml`):
+  - `build` job runs on every PR + push to `main`/`staging` — pnpm install,
+    Biome lint, Astro build, Pagefind index verification.
+  - `deploy` job runs on push to `main`/`staging`, uploads `dist/` to
+    Cloudflare Pages via Wrangler. Production deploys come from `main`;
+    staging deploys to a preview URL.
+  - Requires repo secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+### Changed
+- `docs/runbooks/deploy-cloudflare-pages.md` rewritten for the
+  Actions-driven deploy flow (no native Git connection on the Cloudflare
+  side). See ADR 0003 for context.
 
 ## [2026-05-23]
 
