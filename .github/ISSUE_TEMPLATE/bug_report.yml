@@ -1,0 +1,39 @@
+name: Bug report
+description: Something on mhamza.space (or this repo's tooling) is broken.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What's broken?
+      description: One or two sentences. What did you expect, what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Steps, URL, or commit SHA. The shorter the better.
+      placeholder: |
+        1. Open https://mhamza.space/blog/...
+        2. ...
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser + OS, or `pnpm --version` + Node version if it's a build issue.
+      placeholder: "Firefox 128 / Windows 11, or Node 22 / pnpm 10.27"
+    validations:
+      required: false
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: Anything else
+      description: Screenshots, logs, hypotheses — optional.
+    validations:
+      required: false

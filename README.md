@@ -2,6 +2,10 @@
 
 Personal site and tech blog of **Muhammad Hamza** — Azure Cloud Specialist & DevOps Engineer.
 
+[![CI](https://github.com/hamzawork1/kb-blogs/actions/workflows/ci.yml/badge.svg)](https://github.com/hamzawork1/kb-blogs/actions/workflows/ci.yml)
+[![Deployed on Cloudflare Workers](https://img.shields.io/badge/deploy-cloudflare%20workers-F38020?logo=cloudflare&logoColor=white)](https://mhamza.space)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Source:  <https://github.com/hamzawork1/kb-blogs>
 Staging: <https://staging.mhamza.space>
 Live:    <https://mhamza.space> (not yet deployed — pending first push to `main`)
