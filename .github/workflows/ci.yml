@@ -113,9 +113,42 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  lighthouse:
+    name: Lighthouse CI (perf + a11y budgets)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write # post Lighthouse score comment on PRs
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        # Needed for `.lighthouserc.json` and so the action can detect repo
+        # context for the PR comment.
+        uses: actions/checkout@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+      # Budgets ship as `warn` initially - first runs establish a baseline,
+      # then we'll flip to `error` once the numbers are stable. Reports
+      # upload to Lighthouse's free `temporary-public-storage` (7-day
+      # retention) and the action auto-comments the PR with scores.
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
+        with:
+          configPath: ./.lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
   deploy:
     name: Deploy to Cloudflare Workers (${{ github.ref_name }})
-    needs: build
+    needs: [build, lighthouse]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
