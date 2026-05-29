@@ -30,6 +30,10 @@ html_handling = "auto-trailing-slash"
 # ---------------------------------------------------------------------------
 [env.production]
 name = "mhamza-space"
+# Keep the .workers.dev default URL disabled. Without this, every deploy
+# re-enables it (Wrangler default = true), which leaks an off-domain access
+# path. mhamza.space is the only intended entrypoint.
+workers_dev = false
 
 [env.production.assets]
 directory = "./dist"
@@ -42,6 +46,11 @@ html_handling = "auto-trailing-slash"
 # ---------------------------------------------------------------------------
 [env.staging]
 name = "mhamza-space-staging"
+# Same reasoning as production - only staging.mhamza.space should serve the
+# site. The .workers.dev URL was disabled manually after the first deploy
+# but every subsequent `wrangler deploy` re-enabled it; pinning here makes
+# the disable persistent.
+workers_dev = false
 
 [env.staging.assets]
 directory = "./dist"
