@@ -308,20 +308,33 @@ jobs:
           egress-policy: audit
       - name: Checkout
         uses: actions/checkout@v4
-      # Lychee follows the sitemap so every published page gets its outbound
-      # links checked. Catches `linkedin.com` going down, blog post URLs that
-      # broke, etc. Failure here does NOT roll back the deploy - it surfaces
-      # in the workflow run so we can fix and redeploy.
-      #
-      # --remap: Astro generates the sitemap from astro.config.ts's
-      # `site: "https://mhamza.space"`, so even the staging build's sitemap
-      # points at the production domain. Remap rewrites those URLs to
-      # staging.mhamza.space so Lychee can actually reach them while
-      # production is still un-deployed. (Once production is live, this
-      # remap still works because both domains serve identical content,
-      # and dropping it is a one-line change.)
-      - name: Run Lychee (live, sitemap-driven)
+      # Lychee against the sitemap URL extracted Total=0 in earlier runs
+      # (XML response not parsed as link source). Fetch the sitemap here,
+      # extract the <loc> URLs, remap them from production to staging, and
+      # hand them to Lychee explicitly. Same end result, deterministic.
+      - name: Build staging URL list from sitemap
+        id: urls
+        run: |
+          set -e
+          urls=$(curl -sS https://staging.mhamza.space/sitemap-0.xml \
+            | grep -oE '<loc>[^<]+</loc>' \
+            | sed -E 's|</?loc>||g' \
+            | sed 's|https://mhamza\.space|https://staging.mhamza.space|g' \
+            | tr '\n' ' ')
+          if [ -z "$urls" ]; then
+            echo "Failed to extract URLs from sitemap"
+            exit 1
+          fi
+          echo "Discovered URLs:"
+          echo "$urls" | tr ' ' '\n'
+          echo "urls=$urls" >> "$GITHUB_OUTPUT"
+
+      # Lychee fetches each URL, parses the HTML, and checks every outbound
+      # link. Catches LinkedIn going down, blog reference URLs that 404'd,
+      # external GitHub repos archived, etc. Failure here does NOT roll
+      # back the deploy - it surfaces as a failed workflow on the commit.
+      - name: Run Lychee (live, page-by-page)
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
-          args: --no-progress --verbose --remap "https://mhamza.space https://staging.mhamza.space" https://staging.mhamza.space/sitemap-index.xml
+          args: --no-progress --verbose ${{ steps.urls.outputs.urls }}
           fail: true
