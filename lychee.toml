@@ -33,5 +33,6 @@ exclude = [
 	"x\\.com",
 ]
 
-# Don't try to validate mailto: links.
-exclude_mail = true
+# Don't try to validate mailto: links. (Lychee v0.23 spells this `include_mail`;
+# the previous `exclude_mail = true` errored at config-load with "unknown field".)
+include_mail = false
