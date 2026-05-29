@@ -16,6 +16,15 @@
 name = "mhamza-space"
 compatibility_date = "2025-05-25"
 
+# Disable the auto-generated .workers.dev hostname and Cloudflare's
+# "Preview URLs" feature globally. Top-level settings (per Wrangler 4)
+# are inherited by every env block - the equivalent settings inside
+# [env.production] / [env.staging] are NOT picked up (Wrangler warns
+# "workers_dev is not in your Wrangler file" if set only there).
+# Only mhamza.space / staging.mhamza.space should serve the site.
+workers_dev = false
+preview_urls = false
+
 [assets]
 directory = "./dist"
 # When a request doesn't match a built asset, fall back to the prebuilt 404 page
@@ -30,10 +39,6 @@ html_handling = "auto-trailing-slash"
 # ---------------------------------------------------------------------------
 [env.production]
 name = "mhamza-space"
-# Keep the .workers.dev default URL disabled. Without this, every deploy
-# re-enables it (Wrangler default = true), which leaks an off-domain access
-# path. mhamza.space is the only intended entrypoint.
-workers_dev = false
 
 [env.production.assets]
 directory = "./dist"
@@ -46,11 +51,6 @@ html_handling = "auto-trailing-slash"
 # ---------------------------------------------------------------------------
 [env.staging]
 name = "mhamza-space-staging"
-# Same reasoning as production - only staging.mhamza.space should serve the
-# site. The .workers.dev URL was disabled manually after the first deploy
-# but every subsequent `wrangler deploy` re-enabled it; pinning here makes
-# the disable persistent.
-workers_dev = false
 
 [env.staging.assets]
 directory = "./dist"
