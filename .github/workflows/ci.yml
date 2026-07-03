@@ -103,6 +103,23 @@ jobs:
         uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Keep this list in sync with the type-enum in commitlint.config.mjs -
+          # otherwise a commit message type that's valid per-commit (e.g. "post"
+          # for a new blog post) still fails the aggregate PR title check.
+          types: |
+            feat
+            fix
+            docs
+            ci
+            chore
+            refactor
+            perf
+            style
+            test
+            post
+            revert
+            build
 
   commitlint:
     name: Commitlint (per-commit message)
