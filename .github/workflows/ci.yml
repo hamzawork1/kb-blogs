@@ -303,11 +303,11 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
       # Hit the just-deployed URL and assert the page is real (status 200 +
       # content markers). Catches "deploy succeeded but site is broken".
-      # URL is environment-aware: prod gets mhamza.space, staging gets the
-      # staging subdomain.
+      # URL is environment-aware: prod gets blog.mhamza.space, staging gets
+      # the staging subdomain.
       - name: Run smoke test
         run: |
-          node scripts/smoke.mjs "${{ github.ref_name == 'main' && 'https://mhamza.space' || 'https://staging.mhamza.space' }}"
+          node scripts/smoke.mjs "${{ github.ref_name == 'main' && 'https://blog.mhamza.space' || 'https://staging.mhamza.space' }}"
 
   link-check-live:
     name: Link audit (live, external)
@@ -336,7 +336,7 @@ jobs:
           urls=$(curl -sS https://staging.mhamza.space/sitemap-0.xml \
             | grep -oE '<loc>[^<]+</loc>' \
             | sed -E 's|</?loc>||g' \
-            | sed 's|https://mhamza\.space|https://staging.mhamza.space|g' \
+            | sed 's|https://blog\.mhamza\.space|https://staging.mhamza.space|g' \
             | tr '\n' ' ')
           if [ -z "$urls" ]; then
             echo "Failed to extract URLs from sitemap"
@@ -352,10 +352,10 @@ jobs:
       # back the deploy - it surfaces as a failed workflow on the commit.
       # --remap: pages have canonical / og:url tags pointing at the production
       # domain (Astro builds them from astro.config.ts's site field). Without
-      # remap, Lychee hits https://mhamza.space/... and gets HTTP 522 because
-      # production isn't deployed. Remap rewrites those at check time.
+      # remap, Lychee hits https://blog.mhamza.space/... and gets HTTP 522
+      # because production isn't deployed. Remap rewrites those at check time.
       - name: Run Lychee (live, page-by-page)
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
-          args: --no-progress --verbose --remap "https://mhamza.space https://staging.mhamza.space" ${{ steps.urls.outputs.urls }}
+          args: --no-progress --verbose --remap "https://blog.mhamza.space https://staging.mhamza.space" ${{ steps.urls.outputs.urls }}
           fail: true

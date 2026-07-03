@@ -1,16 +1,16 @@
 # Runbook — Deploy to Cloudflare (Workers with static assets, via GitHub Actions)
 
 Sets up the pipeline so every push to `main` deploys to production
-(`mhamza.space`) and every push to `staging` deploys to a staging Worker.
+(`blog.mhamza.space`) and every push to `staging` deploys to a staging Worker.
 
 **Architecture:** GitHub Actions builds the site
-(`.github/workflows/ci-cd.yml`) and uploads the `dist/` output to a
+(`.github/workflows/ci.yml`) and uploads the `dist/` output to a
 Cloudflare **Worker with static assets** via Wrangler. Two environments
 declared in `wrangler.toml` map to two Workers:
 
 | Branch | Worker name | Public URL (initial) |
 |---|---|---|
-| `main` | `mhamza-space` | `mhamza-space.<subdomain>.workers.dev` → custom domain `mhamza.space` later |
+| `main` | `mhamza-space` | `mhamza-space.<subdomain>.workers.dev` → custom domain `blog.mhamza.space` later |
 | `staging` | `mhamza-space-staging` | `mhamza-space-staging.<subdomain>.workers.dev` → optional `staging.mhamza.space` later |
 
 Why Workers (not Pages)? See [ADR 0003](../decisions/0003-github-actions-deploy.md).
@@ -108,22 +108,33 @@ step prints the deployed Worker URL.
 Visit the URL to confirm the site loads, search works (Pagefind index is
 inside `dist/`), and posts render.
 
-## Step 5 — Custom domain — `mhamza.space`
+## Step 5 — Custom domain — `blog.mhamza.space`
 
 > Wait until at least one successful production deploy has landed before
 > attaching the custom domain.
 
 1. In the Cloudflare dashboard, open the production Worker
    (`mhamza-space`) → **Domains** tab.
-2. **Add custom domain** → `mhamza.space`.
-   - If `mhamza.space` is already on Cloudflare DNS, the record is added
-     for you.
-   - Otherwise, point the apex (or a CNAME on a subdomain) at the
-     `workers.dev` target Cloudflare gives you.
-3. Add `www.mhamza.space` as a second domain — Cloudflare auto-redirects
-   apex/www traffic.
-4. SSL certs provision within a couple of minutes on Cloudflare-managed
+2. **Add custom domain** → `blog.mhamza.space`.
+   - Since `mhamza.space` is already on Cloudflare DNS, the `blog` CNAME
+     record is added for you automatically.
+3. `mhamza.space` (apex) is intentionally left unattached — this project
+   only owns the `blog` subdomain, not the root domain, which stays free
+   for other future use.
+4. `www.blog.mhamza.space` is not attached either — nobody types `www.`
+   in front of an already-specific subdomain. If it ever becomes a
+   problem, add a **Redirect Rule** (Cloudflare dashboard → Rules →
+   Redirect Rules) sending `www.blog.mhamza.space/*` → `https://blog.mhamza.space/$1`
+   rather than a second Worker custom domain.
+5. SSL certs provision within a couple of minutes on Cloudflare-managed
    zones.
+6. **After DNS propagates**, submit `blog.mhamza.space` + its sitemap
+   (`https://blog.mhamza.space/sitemap-index.xml`) to
+   [Google Search Console](https://search.google.com/search-console) —
+   this is what actually gets the site indexed/searchable on Google in a
+   reasonable timeframe. `public/robots.txt` already references the
+   sitemap, but Search Console submission is what triggers a prompt
+   crawl instead of waiting for organic discovery.
 
 ### Optional — `staging.mhamza.space`
 
@@ -142,10 +153,10 @@ After the staging Worker has been created by its first deploy:
 - [ ] Workflow's **deploy** job posts a Worker URL.
 - [ ] Visiting the URL loads the site; `/blog/<slug>` renders correctly;
       `/blog/<slug>/` (trailing slash variant) also works; search returns
-      hits; OG meta in `view-source` references `https://mhamza.space`.
+      hits; OG meta in `view-source` references `https://blog.mhamza.space`.
 - [ ] After merging staging → main and pushing main, production deploys
-      to `mhamza-space` Worker (and `mhamza.space` once the custom domain
-      is attached).
+      to `mhamza-space` Worker (and `blog.mhamza.space` once the custom
+      domain is attached).
 
 ## Rollback
 
@@ -238,4 +249,10 @@ If usage outgrows the free tier, options:
   enforce single-source-of-truth, disable it from the Worker → Domains
   tab (toggle next to the `.workers.dev` entry). After disabling, only
   the custom domain reaches the Worker.
-- _(more to be filled during the first production deploy + custom domain wiring for mhamza.space)_
+- 2026-07-03 — Decided the production custom domain will be
+  `blog.mhamza.space`, not the apex `mhamza.space` — the apex stays free
+  for other future use, and the pattern now mirrors `staging.mhamza.space`
+  (just prod instead of staging). Updated `astro.config.ts`'s `site`,
+  the Lychee remap args and `smoke.mjs` URL in `ci.yml`, and this runbook
+  accordingly, ahead of the actual first production deploy.
+- _(more to be filled during the first production deploy + custom domain wiring for blog.mhamza.space)_
