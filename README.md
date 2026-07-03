@@ -2,29 +2,39 @@
 
 Personal site and tech blog of **Muhammad Hamza** — Azure Cloud Specialist & DevOps Engineer.
 
-Source: <https://github.com/hamzawork1/kb-blogs>
-Live:   <https://mhamza.space>
+[![CI](https://github.com/hamzawork1/kb-blogs/actions/workflows/ci.yml/badge.svg)](https://github.com/hamzawork1/kb-blogs/actions/workflows/ci.yml)
+[![Security](https://github.com/hamzawork1/kb-blogs/actions/workflows/security.yml/badge.svg)](https://github.com/hamzawork1/kb-blogs/actions/workflows/security.yml)
+[![Deployed on Cloudflare Workers](https://img.shields.io/badge/deploy-cloudflare%20workers-F38020?logo=cloudflare&logoColor=white)](https://mhamza.space)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![SLSA Level 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev/spec/v1.0/levels#build-l3)
+
+Source:  <https://github.com/hamzawork1/kb-blogs>
+Staging: <https://staging.mhamza.space>
+Live:    <https://mhamza.space> (not yet deployed — pending first push to `main`)
 
 Built on [Astro](https://astro.build/) using a customised version of the
 [Spectre](https://github.com/louisescher/spectre) theme. Deployed as a fully
-static site on **Cloudflare Pages**.
+static site to **Cloudflare Workers (with static assets)** via GitHub Actions.
 
 ---
 
 ## Quick start
 
+This repo uses **pnpm** (workspace setup). Install pnpm via `corepack enable`
+or `npm install -g pnpm@10.27.0`, then:
+
 ```powershell
 # install deps (first time)
-npm install
+pnpm install
 
 # dev server (no search, fast iteration)
-npm run dev
+pnpm dev
 
 # production build + Pagefind search index
-npm run build
+pnpm build
 
 # preview the built output locally (search works here)
-npm run preview
+pnpm preview
 ```
 
 | Script        | What it does |
@@ -52,20 +62,14 @@ main          production         (mhamza.space)         protected, PR-only from 
 ### Workflow for every change
 
 1. `git checkout staging && git pull`
-2. `git checkout -b post/<slug>` (or `feature/<name>`, `fix/<name>`)
-3. Make changes. Commit in small, focused commits.
+2. `git checkout -b post/<slug>` (or `feature/<name>`, `fix/<name>`, `chore/<name>`, `docs/<name>`, `ci/<name>`)
+3. Make changes. Commit in small, focused commits (Conventional Commits — `commitlint` is enforced on PRs).
 4. `git push -u origin <branch-name>`
-5. Open a PR → **`staging`**. Cloudflare Pages auto-deploys a preview URL.
+5. Open a PR → **`staging`**. CI runs lint, typecheck, build, Lighthouse, link-check, secret-scan, SCA, SBOM, and provenance attestation. No PR preview URL — verify locally with `pnpm preview`, or merge to staging to see it at `staging.mhamza.space`.
 6. Verify the preview, merge to `staging`.
 7. Once `staging` is solid, open a PR `staging` → `main`. Merge to deploy live.
 
 > Never push directly to `main`. All production deploys come through staging.
-
-### Initial setup branch
-
-`start-the-project` is the bootstrap branch (this repo's initial scaffolding —
-branding, content cleanup, first post). It'll be merged into `staging`, then
-`staging` → `main` once you're happy with the live result.
 
 ---
 
@@ -201,20 +205,26 @@ For images that appear inside a post's body (e.g. Azure portal screenshots):
 
 ---
 
-## Deployment — Cloudflare Pages
+## Deployment — Cloudflare Workers (static assets) via GitHub Actions
 
-The site builds to fully-static HTML (no Node adapter). Cloudflare Pages picks
-this up automatically.
+The site builds to fully-static HTML and is deployed as a Cloudflare
+**Worker with static assets** (the modern successor to Pages). Deploys are
+driven by [`.github/workflows/ci.yml`](.github/workflows/ci.yml),
+not by Cloudflare's native Git integration.
 
-1. In the Cloudflare dashboard → **Workers & Pages → Create application → Pages → Connect to Git**.
-2. Pick this repo (`hamzawork1/kb-blogs`).
-3. Build settings:
-   - **Production branch:** `main`
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-   - **Node version:** `20` (set via env var `NODE_VERSION=20` or in repo).
-4. Add the custom domain `mhamza.space` under **Custom domains**.
-5. Every PR + non-main branch gets an automatic preview deployment.
+- **Production** — push to `main` → Worker `mhamza-space-prod` → custom domain
+  `blog.mhamza.space`.
+- **Staging** — push to `staging` → Worker `mhamza-space-staging` → optional
+  `staging.mhamza.space`.
+- **Build environment** — Node 22 (Astro 6 requires `>= 22.12`), pnpm 10.27.
+- **Asset config** — declared in [`wrangler.toml`](wrangler.toml).
+- **Required GitHub secrets** — `CLOUDFLARE_API_TOKEN` (scope
+  `Workers Scripts:Edit`), `CLOUDFLARE_ACCOUNT_ID`.
+
+Full step-by-step setup, rollback, and troubleshooting live in
+[`docs/runbooks/deploy-cloudflare-pages.md`](docs/runbooks/deploy-cloudflare-pages.md).
+Rationale is in [ADR 0001](docs/decisions/0001-static-cloudflare-pages.md)
+and [ADR 0003](docs/decisions/0003-github-actions-deploy.md).
 
 ---
 

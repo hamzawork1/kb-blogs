@@ -1,0 +1,40 @@
+# Weekly external-link audit against the live staging site.
+#
+# Why a separate workflow:
+#   Catches external link rot (LinkedIn changing URLs, blog post 404s,
+#   external GitHub repos archived) independently of deploys. Running this
+#   inside ci.yml on cron would also run lint / typecheck / build / deploy
+#   every Monday - wasted minutes for a check that only needs the live URL.
+#
+# Reuses the same `lychee.toml` as ci.yml, so accept-list and excludes stay
+# in lockstep across both link-audit paths.
+
+name: Link audit (cron)
+
+on:
+  schedule:
+    # Mondays 06:23 UTC = 11:23 AM Karachi. Off-peak so a noisy result
+    # surfaces in the morning before the workday picks up.
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  link-check-live:
+    name: Link audit (live, external)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run Lychee (live, sitemap-driven)
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
+        with:
+          args: --no-progress --verbose https://staging.mhamza.space/sitemap-index.xml
+          fail: true

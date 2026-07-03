@@ -1,0 +1,59 @@
+# Cloudflare Worker — static site delivery for blog.mhamza.space.
+#
+# This Worker has no code of its own; it serves the contents of dist/
+# (the Astro build output) as static assets at the edge.
+#
+# Two named environments (Worker names are internal Cloudflare resource
+# names and are independent of the custom domain attached to them):
+#   - production -> Worker name "mhamza-space-prod"      (mapped to blog.mhamza.space)
+#   - staging    -> Worker name "mhamza-space-staging"  (mapped to staging.mhamza.space)
+#
+# The GitHub Actions workflow picks the environment based on the pushed branch:
+#   main    -> --env production
+#   staging -> --env staging
+#
+# Reference: https://developers.cloudflare.com/workers/static-assets/
+
+name = "mhamza-space-prod"
+compatibility_date = "2025-05-25"
+
+# Disable the auto-generated .workers.dev hostname and Cloudflare's
+# "Preview URLs" feature globally. Top-level settings (per Wrangler 4)
+# are inherited by every env block - the equivalent settings inside
+# [env.production] / [env.staging] are NOT picked up (Wrangler warns
+# "workers_dev is not in your Wrangler file" if set only there).
+# Only blog.mhamza.space / staging.mhamza.space should serve the site.
+workers_dev = false
+preview_urls = false
+
+[assets]
+directory = "./dist"
+# When a request doesn't match a built asset, fall back to the prebuilt 404 page
+# from src/pages/404.astro. (single-page-application would route everything to
+# index.html — not what we want for a multi-page static site.)
+not_found_handling = "404-page"
+# No HTML extension stripping; Astro already emits clean URLs (/blog/<slug>/index.html).
+html_handling = "auto-trailing-slash"
+
+# ---------------------------------------------------------------------------
+# Production environment — pushed on commits to `main`.
+# ---------------------------------------------------------------------------
+[env.production]
+name = "mhamza-space-prod"
+
+[env.production.assets]
+directory = "./dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"
+
+# ---------------------------------------------------------------------------
+# Staging environment — pushed on commits to `staging`.
+# Separate Worker so prod and staging can be rolled back independently.
+# ---------------------------------------------------------------------------
+[env.staging]
+name = "mhamza-space-staging"
+
+[env.staging.assets]
+directory = "./dist"
+not_found_handling = "404-page"
+html_handling = "auto-trailing-slash"

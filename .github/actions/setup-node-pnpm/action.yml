@@ -1,0 +1,38 @@
+# Composite action — shared setup for every CI job that needs the project's
+# Node/pnpm toolchain. Centralising the versions here keeps them in lockstep
+# across jobs and prevents drift if (when) we bump Node or pnpm.
+#
+# Why composite (not reusable workflow)?
+#   - We share a sequence of STEPS, not entire jobs.
+#   - Composite invokes mid-job; reusable workflows replace the job runner.
+#   - No extra workflow startup overhead.
+#
+# Why this action does NOT run actions/checkout?
+#   Callers may need non-default checkout args (e.g. `fetch-depth: 0` for
+#   git-history scans like gitleaks). The calling job is expected to run
+#   actions/checkout itself before invoking this composite.
+
+name: "Setup Node + pnpm"
+description: "Pinned pnpm 10.27.0 + Node 22 LTS, then `pnpm install --frozen-lockfile`."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up pnpm
+      # Third-party action SHA-pinned for supply-chain hardening.
+      # Renovate (renovate.json `pinDigests: true`) keeps this fresh.
+      uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      with:
+        version: 10.27.0
+        run_install: false
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        # Astro 6 requires Node >= 22.12. Pin to 22 LTS for stability.
+        node-version: 22
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

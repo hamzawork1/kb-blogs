@@ -1,0 +1,38 @@
+# Lychee link-auditor config.
+#
+# Used by two workflows:
+#   - ci.yml `link-check-pr`   : offline mode against built dist/ on every PR
+#   - ci.yml `link-check-live` : live mode against the deployed staging URL after deploy
+#   - link-check.yml           : weekly live cron against the deployed staging URL
+#
+# Reference: https://lychee.cli.rs/usage/config/
+
+# Retry transient network errors a few times before declaring a link dead.
+max_retries = 3
+retry_wait_time = 2
+
+# Persist results between runs so unchanged links aren't rechecked every PR.
+cache = true
+max_cache_age = "1d"
+
+# Accept these statuses as success.
+#   200/203/206/304/3xx -> obvious
+#   403/429             -> some sites bot-block or rate-limit valid links
+#   999                 -> LinkedIn-specific "I'm a bot, go away" code
+accept = [200, 203, 206, 301, 302, 304, 307, 308, 403, 429, 999]
+
+max_concurrency = 16
+timeout = 20
+
+# Skip noisy hosts known to misbehave with link-checkers.
+exclude = [
+	"^https?://localhost",
+	"^https?://127\\.0\\.0\\.1",
+	"linkedin\\.com",
+	"twitter\\.com",
+	"x\\.com",
+]
+
+# Don't try to validate mailto: links. (Lychee v0.23 spells this `include_mail`;
+# the previous `exclude_mail = true` errored at config-load with "unknown field".)
+include_mail = false
