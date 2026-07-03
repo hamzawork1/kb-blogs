@@ -48,6 +48,7 @@ $Palettes = @{
     "ci-cd"    = @{ Dark1 = @(30,15,5);   Dark2 = @(210,110,30);  Accent = @(255,200,140) }
     notes      = @{ Dark1 = @(15,15,20);  Dark2 = @(70,70,90);    Accent = @(200,200,220) }
     guide      = @{ Dark1 = @(5,25,25);   Dark2 = @(20,140,140);  Accent = @(150,230,230) }
+    linux      = @{ Dark1 = @(5,10,5);    Dark2 = @(15,50,15);    Accent = @(120,255,140) }
 }
 
 function New-CoverImage {
