@@ -1,0 +1,232 @@
+---
+title: "Azure VM Agent Not Ready: Complete Troubleshooting & Resolution Guide"
+description: "Diagnose and fix an Azure Linux VM stuck in 'VM Agent Not Ready' state — including the real root cause behind a case where a host-based security tool silently blocked the Azure Fabric Controller."
+image: "../assets/azure-cover.png"
+createdAt: 2026-07-03
+draft: false
+tags:
+  - azure
+  - linux
+---
+
+## Introduction
+
+"VM Agent Not Ready" is one of the more disorienting states an Azure VM can end up in: the VM is still running, but the Azure Portal shows the guest agent as unreachable, SSH stops responding, and Portal-based operations like password reset silently fail with:
+
+```text
+VM Agent is either unavailable, or not installed, which may prevent VMAccess from running.
+```
+
+The common triggers are a VM resize performed while a backup job is running (both restart/interrupt the guest agent), custom images missing `walinuxagent`, or outbound connectivity to the Azure Fabric Controller (`168.63.129.16`) being blocked. Every management feature that depends on the guest agent — SSH-based password reset, VMAccess extension, monitoring extensions — goes down with it.
+
+This guide walks through the standard recovery ladder (redeploy, disk-attach repair) and then the real case that prompted it: the agent looked dead, but the actual cause was a host-based security tool that had quietly rewritten the VM's firewall rules.
+
+## Prerequisites
+
+- Azure CLI installed and authenticated (`az login`), with access to the VM's resource group
+- A pre-created **emergency/break-glass local admin user** with a password (not just an SSH key) — this is what makes Serial Console access possible when the guest agent, SSH, and Portal password reset are all unavailable
+- Basic familiarity with `iptables` / `systemctl` on the VM's Linux distro
+- Awareness of any host-based security or intrusion-prevention tools running on the VM (fail2ban, IPBan, CrowdStrike, etc.) — know what's installed before an incident, not during one
+- If the VM has a **Managed Identity** with role assignments elsewhere, treat the VM as non-replaceable — the fix has to heal the existing VM, not recreate it
+
+## Step-by-Step Guide
+
+### Step 1 — Confirm the symptom and rule out the easy fixes
+
+Check the VM Overview page for "VM Agent Status: Not Ready" and confirm SSH is timing out or refusing connections. Try the low-risk options first:
+
+```bash
+# Full stop/deallocate + start moves the VM to a new host and resets the agent
+az vm stop -g <resource-group> -n <vm-name>
+az vm start -g <resource-group> -n <vm-name>
+
+# If that doesn't help, Reapply then Redeploy (Portal: VM → Help → Redeploy + reapply)
+az vm redeploy -g <resource-group> -n <vm-name> --verbose
+```
+
+⚠️ Redeploy moves the VM to a new physical host — a dynamic public IP will change, and in environments where a self-hosted Azure DevOps agent or other service binds to the VM's identity/network context, redeploy can introduce its own connectivity issues. If the VM carries a Managed Identity with real role assignments, redeploy is still generally safe (identity is preserved), but it's not guaranteed to fix anything if the underlying cause isn't a hung platform state.
+
+### Step 2 — Get emergency access via Serial Console
+
+If a break-glass local admin user already exists, Serial Console gives you a terminal even though Azure-side management (SSH, password reset) is unreachable — because Serial Console talks to the VM directly, not through the guest agent.
+
+If no such user exists yet, this is normally the point where teams reach for `az vm repair create` (attach the OS disk to a temporary repair VM, chroot in, fix things, reattach). It works, but it's slower and carries more moving parts than just logging in with a break-glass account that was set up in advance.
+
+### Step 3 — Test connectivity to the Azure Fabric Controller
+
+Before assuming the agent itself is corrupted, check whether it can even reach Azure's control plane:
+
+```bash
+curl -v --connect-timeout 10 http://168.63.129.16/machine/?comp=goalstate
+ping -c 2 168.63.129.16
+ip route get 168.63.129.16
+```
+
+A valid route combined with a `curl` timeout is a strong signal that something on the VM — not the network fabric — is dropping the traffic.
+
+### Step 4 — Inspect the firewall rules
+
+```bash
+sudo iptables -L -n --line-numbers
+```
+
+In this case the output showed:
+
+```text
+Chain INPUT (policy DROP)
+Chain FORWARD (policy DROP)
+Chain OUTPUT (policy ACCEPT)
+```
+
+A default `DROP` policy on `INPUT` silently discards every inbound packet that isn't explicitly allowed — including responses from the Fabric Controller that `walinuxagent` needs to report itself as "Ready."
+
+### Step 5 — Find what set that policy
+
+```bash
+systemctl list-units --type=service --all | grep -i ipban
+ps aux | grep -i ipban
+find /opt /usr/local /home -type d \( -name "*ipban*" -o -name "*IPBan*" \)
+```
+
+The culprit was **IPBan Pro Datacenter**, a brute-force-blocking security tool installed on the VM. It had escalated to a restrictive default-`DROP` iptables policy — most likely triggered by repeated failed connection attempts (for example, an expired PAT token on a CI/CD agent retrying continuously) around the same time as the VM resize and an in-progress backup.
+
+### Step 6 — Stop the tool to confirm it's the cause (don't jump to permanent removal)
+
+⚠️ If the tool is a company-mandated security control, treat this as a **temporary diagnostic step**, not the fix. Permanently uninstalling a mandated security agent from a production server just to unblock the VM Agent trades one problem (agent not ready) for another (a compliance/security gap) — and it needs to go through whatever change-management process your org requires for disabling security tooling.
+
+```bash
+sudo systemctl stop IPBanProDatacenter.service
+```
+
+Re-test Fabric Controller connectivity (Step 3) with the service stopped. If it now succeeds, the tool is confirmed as the cause — the correct long-term fix is to **keep the tool and whitelist the Fabric Controller IP in its configuration**, not to remove the tool:
+
+```bash
+# Example — actual config path/syntax depends on the IPBan Pro configuration file
+sudo ipban whitelist 168.63.129.16
+sudo systemctl start IPBanProDatacenter.service
+sudo systemctl restart IPBanProDatacenter.service
+```
+
+Only fall back to full removal (as below) if the tool has no working allowlist mechanism, or if it's not actually a mandated tool for that server — and reinstall/reconfigure it properly afterwards once the incident is resolved:
+
+```bash
+sudo systemctl disable IPBanProDatacenter.service
+sudo rm -f /etc/systemd/system/IPBanProDatacenter.service
+sudo systemctl daemon-reload
+sudo rm -rf /opt/IPBanProDatacenter
+sudo rm -f /etc/ipbanpro_machine_guid.txt
+sudo pkill -f IPBanProDatacenter
+```
+
+### Step 7 — Restore safe iptables defaults
+
+```bash
+sudo iptables -P INPUT ACCEPT
+sudo iptables -P FORWARD ACCEPT
+sudo iptables -P OUTPUT ACCEPT
+sudo iptables -F
+sudo iptables -A INPUT -s 168.63.129.16 -j ACCEPT
+sudo iptables -A OUTPUT -d 168.63.129.16 -j ACCEPT
+sudo apt-get install iptables-persistent -y
+sudo netfilter-persistent save
+```
+
+### Step 8 — Restart the guest agent and verify
+
+```bash
+sudo systemctl stop walinuxagent
+sudo rm -rf /var/lib/waagent/*.xml /var/lib/waagent/GoalState*
+sudo systemctl start walinuxagent
+curl -v --connect-timeout 10 http://168.63.129.16/machine/?comp=goalstate
+
+az vm get-instance-view -g <resource-group> -n <vm-name> \
+  --query "instanceView.vmAgent.statuses[0].displayStatus" -o tsv
+```
+
+The Portal should flip to "Ready" within a few minutes once the Fabric Controller responds.
+
+### Step 9 — Bring dependent services back online
+
+If a self-hosted Azure DevOps agent runs on the VM, it will likely need a restart even after the network path is fixed:
+
+```bash
+cd ~/myagent   # wherever the agent is installed
+sudo systemctl restart vsts.agent.*.service
+sudo systemctl status vsts.agent.*.service
+```
+
+Confirm it shows "Online" in the Azure DevOps agent pool.
+
+### Step 10 — Clean up
+
+Once the VM Agent is confirmed "Ready" and dependent services are back online, close out the incident properly rather than leaving temporary changes in place.
+
+#### A. Emergency access
+
+```bash
+# Option 1 — keep it as a permanent break-glass account (recommended)
+sudo passwd -l emergency      # lock password login; unlock only via Serial Console when needed
+sudo chage -M 90 emergency    # optional: force periodic password rotation
+
+# Option 2 — remove it if it was purely for this incident
+sudo pkill -u emergency
+sudo userdel -r emergency
+id emergency                  # should return "no such user"
+```
+
+#### B. Restore the security tool (if it was fully removed in Step 6)
+
+```bash
+# Reinstall using your org's standard IPBan Pro package/installer
+# then immediately configure the allowlist before re-enabling enforcement:
+sudo ipban whitelist 168.63.129.16
+sudo systemctl enable IPBanProDatacenter.service
+sudo systemctl start IPBanProDatacenter.service
+sudo systemctl status IPBanProDatacenter.service
+
+# Confirm the allowlist survived and the Fabric Controller is still reachable
+curl -v --connect-timeout 10 http://168.63.129.16/machine/?comp=goalstate
+```
+
+#### C. Remove any temporary Azure resources (if `az vm repair` / disk-attach was used)
+
+```bash
+# List and remove the auto-created repair VM, its NIC, disk, and resource group
+az vm show -g <repair-resource-group> -n <repair-vm-name> --query name -o tsv
+az vm repair restore -g <resource-group> -n <vm-name> --verbose   # if not already run
+az group delete -g <repair-resource-group> --yes --no-wait        # cleans up the repair VM + its resources
+
+# Remove any diagnostic snapshots once you're confident the VM is stable
+az snapshot delete -g <resource-group> -n <snapshot-name>
+```
+
+#### D. Final verification checklist
+
+```bash
+az vm get-instance-view -g <resource-group> -n <vm-name> \
+  --query "instanceView.vmAgent.statuses[0].displayStatus" -o tsv   # → Ready
+az vm identity show -g <resource-group> -n <vm-name>                # → Managed Identity intact
+sudo iptables -L -n --line-numbers                                  # → default policies ACCEPT, Fabric Controller explicitly allowed
+sudo systemctl status IPBanProDatacenter.service                    # → running, with 168.63.129.16 whitelisted
+sudo systemctl status vsts.agent.*.service                          # → active, Online in Azure DevOps portal
+```
+
+## Common Issues / Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Portal password reset fails | The VMAccess extension depends on a "Ready" VM Agent — fix the agent connectivity first, don't keep retrying password reset |
+| Redeploy doesn't fix it | Redeploy addresses a hung/corrupted platform state; it does nothing for a host-level firewall rule set by software running inside the VM |
+| `curl` to `168.63.129.16` times out but `ip route get` shows a valid route | Points to a local firewall/iptables issue, not a network or Fabric Controller outage |
+| VM has a Managed Identity with real role assignments | Never delete/recreate the VM to "fix" an agent issue — every dependent role assignment breaks. Heal in place |
+| IPBan / fail2ban-style tools | Can silently escalate to a default-`DROP` iptables policy after repeated failed logins (e.g. an expired PAT token on an automation agent) — always whitelist `168.63.129.16` explicitly |
+| No password-based emergency user exists | You're forced into the slower `az vm repair create` disk-attach flow just to get a terminal — set up a break-glass account before you need one |
+| Tool is a company-mandated security agent | Don't leave it permanently uninstalled after the incident — reinstall and reconfigure it with the Fabric Controller IP whitelisted so the fix doesn't reopen a compliance gap |
+
+## Conclusion
+
+Not every "VM Agent Not Ready" is a corrupted agent — check basic reachability to `168.63.129.16` before reaching for redeploy, disk-attach repair, or a backup restore, all of which are heavier and riskier (public IP changes, identity-binding resets) than they need to be. In this case, the actual blocker was a host-based security tool that had rewritten the VM's iptables policy to `DROP` after a burst of failed login attempts.
+
+That said, uninstalling the security tool outright — even temporarily — isn't the recommended path if it's a company-mandated control, and it shouldn't be treated as the permanent fix. The tool was reinstalled and reconfigured after the incident was resolved, since running a production server without a required security agent is its own risk. The better long-term fix is the same either way: keep the tool running, but make sure `168.63.129.16` is explicitly allowlisted in its configuration so it can never be caught by a future escalation, regardless of what triggers it.
+
+The other lesson: a pre-created, password-based emergency admin user turned Serial Console into a full diagnostic and repair session. Without it, the same fix would likely have required the slower `az vm repair create` disk-attach method just to get a shell.
