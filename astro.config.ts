@@ -23,7 +23,7 @@ import { spectreDark } from "./src/ec-theme";
 
 // https://astro.build/config
 const config = defineConfig({
-	site: "https://mhamza.space",
+	site: "https://blog.mhamza.space",
 	output: "static",
 	// astro-expressive-code registers its own markdown.remarkPlugins entry,
 	// which makes Astro skip its built-in GFM (tables, strikethrough, task

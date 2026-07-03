@@ -209,11 +209,11 @@ For images that appear inside a post's body (e.g. Azure portal screenshots):
 
 The site builds to fully-static HTML and is deployed as a Cloudflare
 **Worker with static assets** (the modern successor to Pages). Deploys are
-driven by [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml),
+driven by [`.github/workflows/ci.yml`](.github/workflows/ci.yml),
 not by Cloudflare's native Git integration.
 
-- **Production** — push to `main` → Worker `mhamza-space` → custom domain
-  `mhamza.space`.
+- **Production** — push to `main` → Worker `mhamza-space-prod` → custom domain
+  `blog.mhamza.space`.
 - **Staging** — push to `staging` → Worker `mhamza-space-staging` → optional
   `staging.mhamza.space`.
 - **Build environment** — Node 22 (Astro 6 requires `>= 22.12`), pnpm 10.27.
