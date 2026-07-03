@@ -6,20 +6,19 @@ import remarkGfm from "remark-gfm";
 import spectre from "./package/src";
 import { spectreDark } from "./src/ec-theme";
 
-// Giscus env vars kept for future enable — uncomment block below when ready.
-// import { loadEnv } from "vite";
-// import type { GiscusMapping } from "./package/src";
-// const {
-// 	GISCUS_REPO,
-// 	GISCUS_REPO_ID,
-// 	GISCUS_CATEGORY,
-// 	GISCUS_CATEGORY_ID,
-// 	GISCUS_MAPPING,
-// 	GISCUS_STRICT,
-// 	GISCUS_REACTIONS_ENABLED,
-// 	GISCUS_EMIT_METADATA,
-// 	GISCUS_LANG,
-// } = loadEnv(process.env.NODE_ENV!, process.cwd(), "");
+import { loadEnv } from "vite";
+import type { GiscusMapping } from "./package/src";
+const {
+	GISCUS_REPO,
+	GISCUS_REPO_ID,
+	GISCUS_CATEGORY,
+	GISCUS_CATEGORY_ID,
+	GISCUS_MAPPING,
+	GISCUS_STRICT,
+	GISCUS_REACTIONS_ENABLED,
+	GISCUS_EMIT_METADATA,
+	GISCUS_LANG,
+} = loadEnv(process.env.NODE_ENV!, process.cwd(), "");
 
 // https://astro.build/config
 const config = defineConfig({
@@ -55,18 +54,20 @@ const config = defineConfig({
 					description: "Selected work and side projects.",
 				},
 			},
-			giscus: false,
-			// giscus: {
-			// 	repository: GISCUS_REPO,
-			// 	repositoryId: GISCUS_REPO_ID,
-			// 	category: GISCUS_CATEGORY,
-			// 	categoryId: GISCUS_CATEGORY_ID,
-			// 	mapping: GISCUS_MAPPING as GiscusMapping,
-			// 	strict: GISCUS_STRICT === "true",
-			// 	reactionsEnabled: GISCUS_REACTIONS_ENABLED === "true",
-			// 	emitMetadata: GISCUS_EMIT_METADATA === "true",
-			// 	lang: GISCUS_LANG,
-			// },
+			giscus: {
+				repository: GISCUS_REPO,
+				repositoryId: GISCUS_REPO_ID,
+				category: GISCUS_CATEGORY,
+				categoryId: GISCUS_CATEGORY_ID,
+				mapping: GISCUS_MAPPING as GiscusMapping,
+				strict: GISCUS_STRICT === "true",
+				reactionsEnabled: GISCUS_REACTIONS_ENABLED === "true",
+				emitMetadata: GISCUS_EMIT_METADATA === "true",
+				lang: GISCUS_LANG,
+				// Site's own dark-theme CSS (src/styles/giscus.css, served at /styles/giscus)
+				// instead of the package default, which points at the theme author's own demo URL.
+				theme: "https://blog.mhamza.space/styles/giscus",
+			},
 		}),
 	],
 	// Node adapter removed for static-only deploys (Cloudflare Pages / GitHub Pages / etc.).

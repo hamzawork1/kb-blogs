@@ -160,6 +160,16 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
       - name: Build (Astro + Pagefind index)
         run: pnpm build
+        env:
+          GISCUS_REPO: ${{ secrets.GISCUS_REPO }}
+          GISCUS_REPO_ID: ${{ secrets.GISCUS_REPO_ID }}
+          GISCUS_CATEGORY: ${{ secrets.GISCUS_CATEGORY }}
+          GISCUS_CATEGORY_ID: ${{ secrets.GISCUS_CATEGORY_ID }}
+          GISCUS_MAPPING: ${{ secrets.GISCUS_MAPPING }}
+          GISCUS_STRICT: ${{ secrets.GISCUS_STRICT }}
+          GISCUS_REACTIONS_ENABLED: ${{ secrets.GISCUS_REACTIONS_ENABLED }}
+          GISCUS_EMIT_METADATA: ${{ secrets.GISCUS_EMIT_METADATA }}
+          GISCUS_LANG: ${{ secrets.GISCUS_LANG }}
       - name: Verify Pagefind index exists
         run: test -d dist/pagefind && echo "OK" || (echo "Pagefind index missing"; exit 1)
       - name: Upload build artifact

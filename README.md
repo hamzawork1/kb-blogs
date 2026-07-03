@@ -228,12 +228,14 @@ and [ADR 0003](docs/decisions/0003-github-actions-deploy.md).
 
 ---
 
-## Comments (Giscus) — currently disabled
+## Comments (Giscus)
 
-The integration supports Giscus-powered comments but it is turned off in
-[`astro.config.ts`](astro.config.ts) (`giscus: false`). To enable later: register the repo
-on <https://giscus.app>, drop the IDs into `.env` (template in
-[`.env.example`](.env.example)), and uncomment the Giscus block in the config.
+Comments are powered by [Giscus](https://giscus.app) (GitHub Discussions-backed).
+Configured in [`astro.config.ts`](astro.config.ts) from environment variables — see
+[`.env.example`](.env.example) for the required keys. Locally, copy it to `.env` and
+fill in the values from <https://giscus.app> for this repo. In CI, the same keys are
+read from GitHub Actions secrets (`GISCUS_REPO`, `GISCUS_REPO_ID`, etc.) and injected
+into the `build` job in [`ci.yml`](.github/workflows/ci.yml).
 
 ---
 
