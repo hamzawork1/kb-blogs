@@ -284,7 +284,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
-          command: deploy --env ${{ github.ref_name == 'main' && 'production' || 'staging' }} --name ${{ github.ref_name == 'main' && 'mhamza-space' || 'mhamza-space-staging' }}
+          command: deploy --env ${{ github.ref_name == 'main' && 'production' || 'staging' }} --name ${{ github.ref_name == 'main' && 'mhamza-space-prod' || 'mhamza-space-staging' }}
 
   smoke:
     name: Smoke test (synthetic GET)

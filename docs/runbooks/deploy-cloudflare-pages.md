@@ -10,7 +10,7 @@ declared in `wrangler.toml` map to two Workers:
 
 | Branch | Worker name | Public URL (initial) |
 |---|---|---|
-| `main` | `mhamza-space` | `mhamza-space.<subdomain>.workers.dev` → custom domain `blog.mhamza.space` later |
+| `main` | `mhamza-space-prod` | `mhamza-space-prod.<subdomain>.workers.dev` → custom domain `blog.mhamza.space` later |
 | `staging` | `mhamza-space-staging` | `mhamza-space-staging.<subdomain>.workers.dev` → optional `staging.mhamza.space` later |
 
 Why Workers (not Pages)? See [ADR 0003](../decisions/0003-github-actions-deploy.md).
@@ -29,16 +29,16 @@ a deploy through the workflow.
 ## Step 1 — Workers already exist (mostly)
 
 If you uploaded any file via Cloudflare's "Upload assets" flow, the
-production Worker (`mhamza-space`) is already created. The first
+production Worker (`mhamza-space-prod`) is already created. The first
 `wrangler deploy --env production` from CI will overwrite its current
 content with the built Astro site. **No manual cleanup is needed.**
 
 The staging Worker (`mhamza-space-staging`) doesn't exist yet — Wrangler
 will create it on the first push to the `staging` branch.
 
-> If the Worker has a different name than `mhamza-space`, either rename it
-> in the dashboard or update `name` and `[env.production].name` in
-> `wrangler.toml` to match.
+> If the Worker has a different name than `mhamza-space-prod`, either
+> rename it in the dashboard or update `name` and `[env.production].name`
+> in `wrangler.toml` to match.
 
 ## Step 2 — Get the Cloudflare credentials
 
@@ -90,7 +90,7 @@ workflow runs as masked environment values.
 
 ## Step 4 — Trigger the first deploy
 
-`.github/workflows/ci-cd.yml` deploys on push to `main` or `staging`.
+`.github/workflows/ci.yml` deploys on push to `main` or `staging`.
 Trigger the first staging deploy:
 
 ```powershell
@@ -114,7 +114,7 @@ inside `dist/`), and posts render.
 > attaching the custom domain.
 
 1. In the Cloudflare dashboard, open the production Worker
-   (`mhamza-space`) → **Domains** tab.
+   (`mhamza-space-prod`) → **Domains** tab.
 2. **Add custom domain** → `blog.mhamza.space`.
    - Since `mhamza.space` is already on Cloudflare DNS, the `blog` CNAME
      record is added for you automatically.
@@ -155,14 +155,14 @@ After the staging Worker has been created by its first deploy:
       `/blog/<slug>/` (trailing slash variant) also works; search returns
       hits; OG meta in `view-source` references `https://blog.mhamza.space`.
 - [ ] After merging staging → main and pushing main, production deploys
-      to `mhamza-space` Worker (and `blog.mhamza.space` once the custom
+      to `mhamza-space-prod` Worker (and `blog.mhamza.space` once the custom
       domain is attached).
 
 ## Rollback
 
 If a bad build ships to production:
 
-1. Cloudflare dashboard → `mhamza-space` Worker → **Deployments** tab.
+1. Cloudflare dashboard → `mhamza-space-prod` Worker → **Deployments** tab.
 2. Find the last good deployment → `...` menu → **Rollback to this
    deployment**.
 3. Production restores within seconds (DNS unchanged).
@@ -178,7 +178,7 @@ If a bad build ships to production:
 | **Deploy fails: "An asset directory is required" / missing `./dist`** | The `download-artifact` step didn't run, or the artifact name doesn't match. Confirm the `build` job uploaded `site-dist` and the `deploy` job downloads it to `dist`. |
 | **Build job fails with `ERR_PNPM_OUTDATED_LOCKFILE`** | `pnpm-lock.yaml` is out of sync with `package.json`. Run `pnpm install` locally, commit the updated lockfile, push. |
 | **Site deploys but URLs 404** | `not_found_handling = "404-page"` is set, but `dist/404.html` wasn't generated. Confirm `src/pages/404.astro` exists and built. |
-| **Workflow doesn't run on push** | Confirm the file is at `.github/workflows/ci-cd.yml` (correct path), YAML is valid (Actions tab shows parse errors), and `on.push.branches` includes the branch you pushed. |
+| **Workflow doesn't run on push** | Confirm the file is at `.github/workflows/ci.yml` (correct path), YAML is valid (Actions tab shows parse errors), and `on.push.branches` includes the branch you pushed. |
 | **Search returns no results live** | `dist/pagefind/` wasn't generated. Check `package.json` → `postbuild` is `pagefind --site dist`. |
 
 ---
