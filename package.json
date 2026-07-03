@@ -29,7 +29,7 @@
 		"@iconify-json/simple-icons": "^1.2.84",
 		"@iconify/utils": "^2.3.0",
 		"@shikijs/themes": "^4.1.0",
-		"astro": "6.3.6",
+		"astro": "6.4.6",
 		"astro-expressive-code": "^0.42.0",
 		"sharp": "^0.34.5"
 	},
@@ -40,11 +40,13 @@
 		"pagefind": "^1.5.2",
 		"shiki": "^4.1.0",
 		"typescript": "^5.9.3",
-		"vite": "^7.3.3"
+		"vite": "^7.3.5"
 	},
 	"pnpm": {
 		"overrides": {
-			"yaml": "^2.8.3"
+			"yaml": "^2.8.3",
+			"esbuild": "^0.28.1",
+			"js-yaml": "^4.2.0"
 		}
 	}
 }
