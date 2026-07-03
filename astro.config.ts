@@ -2,7 +2,6 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 import expressiveCode from "astro-expressive-code";
-import remarkGfm from "remark-gfm";
 import spectre from "./package/src";
 import { spectreDark } from "./src/ec-theme";
 
@@ -25,12 +24,6 @@ import { spectreDark } from "./src/ec-theme";
 const config = defineConfig({
 	site: "https://mhamza.space",
 	output: "static",
-	// astro-expressive-code registers its own markdown.remarkPlugins entry,
-	// which makes Astro skip its built-in GFM (tables, strikethrough, task
-	// lists) support unless we re-add it explicitly here.
-	markdown: {
-		remarkPlugins: [remarkGfm],
-	},
 	integrations: [
 		expressiveCode({
 			themes: [spectreDark],

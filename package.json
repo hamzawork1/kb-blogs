@@ -31,7 +31,6 @@
 		"@shikijs/themes": "^4.1.0",
 		"astro": "6.4.6",
 		"astro-expressive-code": "^0.42.0",
-		"remark-gfm": "^4.0.1",
 		"sharp": "^0.34.5"
 	},
 	"devDependencies": {
